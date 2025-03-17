@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
+/* // handled by go-chi router
 func handleProduct(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -16,43 +19,13 @@ func handleProduct(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not supported.", http.StatusMethodNotAllowed)
 	}
 }
-
+*/
 func handleProductPost(w http.ResponseWriter, r *http.Request) {
-	var product Product
-	// fmt.Printf("\nTypeof Request: %T & Request:%v\n", r.Body, r.Body)
-	/*	log.Printf("\n s: %s \n", r.Body)
-		log.Printf("\n v: %v \n", r.Body)
-		log.Printf("\n +v: %+v \n", r.Body)
-		log.Printf("\n #v: %#v \n", r.Body)
-		log.Printf("\n T: %T \n", r.Body)
-		log.Printf("\n t: %t \n", r.Body)
-		log.Printf("\n q: %q \n", r.Body)
-		log.Printf("\n ptr: %p \n", &r.Body)
-		stringReq := fmt.Sprintf("\n sprintf: %s", r.Body)
-		fmt.Println(stringReq)
-		fmt.Fprintf(os.Stdin, "\n stdIn: %s \n", r.Body)
-	*/
-	/*	jsonHandler := slog.NewJSONHandler(os.Stderr, nil)
-		myslog := slog.New(jsonHandler)
-		myslog.Info(string(r.Body))
-	*/
+	var product []Product
+	fmt.Printf("\nTypeof Request: %T & Request:%v\n", r.Body, r.Body)
 	err := json.NewDecoder(r.Body).Decode(&product)
-	/*
-		log.Printf("\n s: %s \n", err)
-		log.Printf("\n v: %v \n", err)
-		log.Printf("\n +v: %+v \n", err)
-		log.Printf("\n #v: %#v \n", err)
-		log.Printf("\n T: %T \n", err)
-		log.Printf("\n t: %t \n", err)
-		log.Printf("\n q: %q \n", err)
-		log.Printf("\n ptr: %p \n", &err)
-		jsonReq := fmt.Sprintf("\n sprintf: %s", err)
-		fmt.Println(jsonReq)
-		fmt.Fprintf(os.Stdin, "\n stdIn: %s \n", err)
-	*/
-	// fmt.Printf("\nTypeof err: %T & err:%v\n", err, err)
-	// var reqJson map[string]interface{}
-	// myslog.Info(json.Unmarshal(r.Body, reqJson))
+	fmt.Printf("\nTypeof err: %T & err:%v\n", err, err)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -61,8 +34,10 @@ func handleProductPost(w http.ResponseWriter, r *http.Request) {
 	ch := w.Header()
 	ch.Set("Content-type", "application/json")
 	mux.Lock()
-	fmt.Printf("\nTypeof product: %T & product:%v\n", product, product)
-	products[product.ID] = product
+	for _, p := range product {
+		fmt.Printf("\nTypeof product: %T & product:%v\n", p, p)
+		products[p.ID] = p
+	}
 	mux.Unlock()
 
 	w.WriteHeader(http.StatusCreated)
@@ -70,7 +45,8 @@ func handleProductPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleProductGet(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	// id := r.URL.Query().Get("id")
+	id := chi.URLParam(r, "id")
 	if id != "" {
 		mux.Lock()
 		product, exists := products[id]
@@ -95,4 +71,74 @@ func handleProductGet(w http.ResponseWriter, r *http.Request) {
 	mux.Unlock()
 
 	json.NewEncoder(w).Encode(productList)
+}
+
+func handleProductUpdate(w http.ResponseWriter, r *http.Request) {
+	var product []Product
+	fmt.Printf("\nTypeof Request: %T & Request:%v\n", r.Body, r.Body)
+	err := json.NewDecoder(r.Body).Decode(&product)
+	fmt.Printf("\nTypeof err: %T & err:%v\n", err, err)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// check if product with given id exists
+	id := product[0].ID
+	fmt.Printf("\nID type: %T & ID:%v\n", id, id)
+	if id != "" {
+		mux.Lock()
+		productOld, exists := products[id]
+		mux.Unlock()
+		if !exists {
+			http.Error(w, "Product not found.", http.StatusNotFound)
+			return
+		} else {
+			fmt.Printf("\nTypeof Product: %T & Product:%v\n", productOld, productOld)
+		}
+	}
+	ch := w.Header()
+	ch.Set("Content-type", "application/json")
+	mux.Lock()
+	for _, p := range product {
+		fmt.Printf("\nTypeof product: %T & product:%v\n", p, p)
+		products[p.ID] = p
+	}
+	mux.Unlock()
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(product)
+}
+
+func handleProductDelete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "Product ID is required.", http.StatusBadRequest)
+		return
+	} else {
+		mux.Lock()
+		product, exists := products[id]
+		mux.Unlock()
+		if !exists {
+			http.Error(w, "Product not found."+product.Name, http.StatusNotFound)
+			return
+		}
+	}
+
+	mux.Lock()
+	delete(products, id)
+	mux.Unlock()
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func delete(products map[string]Product, id string) []Product {
+	var newProducts []Product
+	for _, product := range products {
+		if product.ID != id {
+			newProducts = append(newProducts, product)
+		}
+	}
+	return newProducts
+
 }
