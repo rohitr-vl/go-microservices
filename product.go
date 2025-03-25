@@ -8,18 +8,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-/* // handled by go-chi router
-func handleProduct(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		handleProductGet(w, r)
-	case "POST":
-		handleProductPost(w, r)
-	default:
-		http.Error(w, "Method not supported.", http.StatusMethodNotAllowed)
-	}
+func getApiCallCount(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(Counter);
 }
-*/
+
 func handleProductPost(w http.ResponseWriter, r *http.Request) {
 	var product []Product
 	fmt.Printf("\nTypeof Request: %T & Request:%v\n", r.Body, r.Body)

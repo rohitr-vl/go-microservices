@@ -18,11 +18,7 @@ func init() {
 	fmt.Printf("DEBUG: a sample jwt is %s\n\n", tokenString)
   }
 func main() {
-	/*	jsonHandler := slog.NewJSONHandler(os.Stderr, nil)
-		myslog := slog.New(jsonHandler)
-		myslog.Info("hi there")
-		myslog.Info("hello again", "key", "val", "age", 25)
-	*/
+
 	defaultProducts()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -37,13 +33,7 @@ func main() {
 		w.Write([]byte("method is not valid"))
 	})
 	// PUBLIC ROUTES
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		// oplog not working
-/*		oplog := httplog.LogEntry(r.Context())
-		oplog.Info("info here")
-*/
-		w.Write([]byte("Hello World!"))
-	})
+	r.Get("/", getApiCallCount)
 	
 	productRouter := chi.NewRouter()
 	productRouter.Get("/", handleProductGet)
@@ -65,24 +55,21 @@ func main() {
 		productRouter.Delete("/{id}", handleProductDelete)
 	})
 	// add sub route to main router
-	r.Mount("/product", productRouter)
+	// r.Mount("/product", productRouter)
+
+	// routing through handler to get the call count
+	r.Mount("/product", ProductRoutes())
 	// http.HandleFunc("/product", handleProduct)
 	fmt.Println("Server running on port 8081")
 	http.ListenAndServe(":8081", r)
-
-	// DumpRequest not working
-/*	const serverAddr = "http://localhost/8081"
-	req, err := http.NewRequest(http.MethodGet, serverAddr, nil)
-	req.Header.Add("test-header", "test-header-value")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	reqDump, err := httputil.DumpRequestOut(req, true)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("REQUEST:\n%s", string(reqDump))
-*/
-	// log.Fatal(http.ListenAndServe(":8081", nil))
+}
+func ProductRoutes() chi.Router {
+    rh := chi.NewRouter()
+    productHandler := ProductHandler{}
+    rh.Get("/", productHandler.ListProducts)
+    rh.Post("/", productHandler.CreateProducts)
+    rh.Get("/{id}", productHandler.GetProduct)
+    rh.Put("/{id}", productHandler.UpdateProducts)
+    rh.Delete("/{id}", productHandler.DeleteProducts)
+    return rh
 }
