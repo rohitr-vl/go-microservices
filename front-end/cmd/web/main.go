@@ -13,7 +13,7 @@ func main() {
 		render(w, "test.page.gohtml")
 	})
 
-	fmt.Println("Starting frond end service on Port 80")
+	fmt.Println("Starting front end service on Port 80")
 	err := http.ListenAndServe(":80", nil)
 	if err != nil {
 		log.Panic(err)
@@ -25,17 +25,17 @@ var templateFS embed.FS
 
 func render(w http.ResponseWriter, t string) {
 	partials := []string{
-		"./cmd/web/templates/base.layout.gohtml",
-		"./cmd/web/templates/header.partial.gohtml",
-		"./cmd/web/templates/footer.partial.gohtml",
+		"templates/base.layout.gohtml",
+		"templates/header.partial.gohtml",
+		"templates/footer.partial.gohtml",
 	}
 	var templateSlice []string
 	templateSlice = append(templateSlice, fmt.Sprintf("templates/%s", t))
-
+	// log.Println("templateSlice Before", templateSlice)
 	for _, x := range partials {
 		templateSlice = append(templateSlice, x)
 	}
-
+	// log.Println("templateSlice After", templateSlice)
 	// parse the templates
 	//tmpl, err := template.ParseFiles(templateSlice...)
 	tmpl, err := template.ParseFS(templateFS, templateSlice...)
