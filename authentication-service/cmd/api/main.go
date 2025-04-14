@@ -23,7 +23,7 @@ type Config struct {
 var counts int64
 
 func main() {
-	log.Println("Statrting authentication service")
+	log.Println("Starting authentication service on port:", webPort)
 
 	conn := connectToDB()
 	if conn == nil {

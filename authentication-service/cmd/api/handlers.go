@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -20,6 +21,7 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 
 	//validate user from DB
 	user, err := app.Models.User.GetByEmail(requestPayload.Email)
+	log.Println("User:", user)
 	if err != nil {
 		app.errorJson(w, errors.New("invalid credentials"), http.StatusBadRequest)
 		return
@@ -31,7 +33,7 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload := jsonResponse{
-		Error:   true,
+		Error:   false,
 		Message: fmt.Sprintf("User Authenticated: %s", user.Email),
 		Data:    user,
 	}

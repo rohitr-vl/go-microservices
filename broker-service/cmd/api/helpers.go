@@ -55,8 +55,10 @@ func (app *Config) errorJson(w http.ResponseWriter, err error, status ...int) er
 		statusCode = status[0]
 	}
 	var payload jsonResponse
-	payload.Error = true
-	payload.Message = err.Error()
+	if err != nil{
+		payload.Error = true
+		payload.Message = err.Error()
+	}
 
 	return app.writeJson(w, statusCode, payload)
 }
