@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	_ "github.com/jackc/pgconn"
@@ -13,7 +14,7 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-const webPort = "8081"
+const webPort = "80"
 
 type Config struct {
 	DB     *sql.DB
@@ -34,7 +35,16 @@ func main() {
 		DB:     conn,
 		Models: data.New(conn),
 	}
-
+	defer conn.Close()
+/*
+	var dbName, dbVersion, dbUser, dbCatalog, dbTable string
+	conn.QueryRow("SELECT current_database()").Scan(&dbName)
+	conn.QueryRow("SELECT version()").Scan(&dbVersion)
+	conn.QueryRow("SELECT current_user").Scan(&dbUser)
+	conn.QueryRow("SELECT * FROM INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME").Scan(&dbCatalog)
+	conn.QueryRow("SELECT * FROM information_schema.tables WHERE table_name LIKE 'users'").Scan(&dbTable)
+	log.Printf("\n Current DB: %s, version: %s, user: %s, catalog: %s, table: %s \n",dbName, dbVersion, dbUser, dbCatalog, dbTable)
+*/
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),
@@ -56,11 +66,14 @@ func openDB(dsn string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return db, nil
 }
 
 func connectToDB() *sql.DB {
-	dsn := "host=localhost user=postgres password=super369 dbname=users port=5432 sslmode=disable TimeZone=Asia/Kolkata connect_timeout=5"
+	// connect to postgres
+	dsn := os.Getenv("DSN")
+	fmt.Println("DSN: ",dsn)
 	for {
 		connection, err := openDB(dsn)
 		if err != nil {
@@ -71,7 +84,7 @@ func connectToDB() *sql.DB {
 			return connection
 		}
 
-		if counts > 20 {
+		if counts > 10 {
 			log.Println(err)
 			return nil
 		}

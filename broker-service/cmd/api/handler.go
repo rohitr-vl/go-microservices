@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
+	"net/http/httputil"
 )
 
 // since the handler "HandleSubmission" will accept all requests coming into broker service,
@@ -81,8 +84,9 @@ func (app *Config) logItem(w http.ResponseWriter, entry LogPayload) {
 func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 	// create payload to send to authenticate-service
 	jsonData, _ := json.MarshalIndent(a, "", "\t")
+	// log.Println("Borker Service, sending auth request. Payload:", string(jsonData))
 	// call the service
-	request, err := http.NewRequest("POST", "http://localhost:8081/authenticate", bytes.NewBuffer(jsonData))
+	request, err := http.NewRequest("POST", "http://authentication-service:/authenticate", bytes.NewBuffer(jsonData))
 	if err != nil {
 		app.errorJson(w,err)
 		return
@@ -95,6 +99,12 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 	}
 	// This is to make sure that after we are done with processing the response.Body, we do not leave it open
 	defer response.Body.Close()
+	respDump, err := httputil.DumpResponse(response, true)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Broker Service, Auth RESPONSE:\n%s", string(respDump))
 
 	if response.StatusCode == http.StatusUnauthorized {
 		app.errorJson(w, errors.New("invalid credentials"))

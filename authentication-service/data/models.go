@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -48,8 +49,7 @@ func (u *User) GetAll() ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at
-	from users order by last_name`
+	query := `select * from users`
 
 	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
@@ -104,9 +104,10 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	)
 
 	if err != nil {
+		log.Println("\n Error in GetByEmail func:", err)
 		return nil, err
 	}
-
+	fmt.Printf("\n User found in DB: %+v\n", user)
 	return &user, nil
 }
 

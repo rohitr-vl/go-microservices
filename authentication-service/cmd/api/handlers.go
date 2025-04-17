@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
 
 	"encoding/json"
 )
@@ -15,33 +16,55 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+	reqDump, err := httputil.DumpRequest(r, true)
+    if err != nil {
+        log.Fatal(err)
+    }
 
-	err := app.readJson(w, r, &requestPayload)
+    fmt.Printf("\nAuthService received authenticate request, Payload:\n%s", string(reqDump))
+	err = app.readJson(w, r, &requestPayload)
 	if err != nil {
+		log.Println("Auth payload read error:", err)
 		app.errorJson(w, err, http.StatusBadRequest)
+		return
+	}
+
+	//check DB connection by fetching all users
+	allUsers, err := app.Models.User.GetAll()
+	fmt.Printf("All users in table: %+v\n", allUsers)
+	if err != nil {
+		log.Println("\nError fetching all users from DB:", err)
+		app.errorJson(w, errors.New("error fetching all users"), http.StatusBadRequest)
 		return
 	}
 
 	//validate user from DB
 	user, err := app.Models.User.GetByEmail(requestPayload.Email)
-	log.Println("User:", user)
+	fmt.Printf("Check User in DB: %+v\n", user)
 	if err != nil {
-		app.errorJson(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		log.Println("\nError finding user in DB:", err)
+		app.errorJson(w, errors.New("error finding user"), http.StatusBadRequest)
 		return
 	}
 	valid, err := user.PasswordMatches(requestPayload.Password)
-	if err != nil || !valid {
+	log.Println("Check if password matches:", valid)
+
+	if err != nil{
+		app.errorJson(w, errors.New("error matching password"), http.StatusBadRequest)
+		return
+	} else if !valid {
 		app.errorJson(w, errors.New("invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
 	// log authentication
+	/*
 	err = app.logRequest("authentication", fmt.Sprintf("%s logged in", user.Email))
 	if err != nil {
 		app.errorJson(w, err, http.StatusBadRequest)
 		return
 	}
-
+*/
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("User Authenticated: %s", user.Email),
