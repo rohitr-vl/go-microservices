@@ -16,6 +16,7 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+project/db-data/mongo/journal/
 
 # Go workspace file
 go.work
@@ -23,3 +24,6 @@ go.work.sum
 
 # env file
 .env
+# microservices executable file
+authentication-service/authApp
+broker-service/brokerApp
