@@ -3,8 +3,11 @@ package main
 import (
 	"bytes"
 	"html/template"
+	"log"
+	"time"
 
 	"github.com/vanng822/go-premailer/premailer"
+	mail "github.com/xhit/go-simple-mail/v2"
 )
 
 type Mail struct {
@@ -41,13 +44,50 @@ func (m *Mail) SendSMTPMessage(msg Message) error {
 	msg.DataMap = data
 	formattedMessage, err := m.buildHtmlMessage(msg)
 	if err != nil {
+		log.Println("\n Mail service, send mail, buildHtmlMessage err:\n", err)
 		return err
 	}
-	plainMessage := m.buildPlainMessage(msg)
+	plainMessage, err := m.buildPlainMessage(msg)
 	if err != nil {
+		log.Println("\n Mail service, send mail, buildPlainMessage err:\n", err)
 		return err
 	}
-	// Working with Microservices in Golang/Section5/Lesson41 - building logic to send email
+
+	server := mail.NewSMTPClient()
+	server.Host = m.Host
+	server.Port = m.Port
+	server.Username = m.Username
+	server.Password = m.Password
+	server.Encryption = m.getEncryption(m.Encryption)
+	server.KeepAlive = false
+	server.ConnectTimeout = 10 * time.Second
+	server.SendTimeout = 10*time.Second
+
+	smtpClient, err := server.Connect()
+	if err != nil {
+		log.Println("\n Mail service, send mail, server connect err:\n", err)
+		return err
+	}
+
+	email := mail.NewMSG()
+	email.SetFrom(msg.From).
+		AddTo(msg.To).
+		SetSubject(msg.Subject).
+		SetBody(mail.TextPlain, plainMessage)
+	email.AddAlternative(mail.TextHTML, formattedMessage)
+
+	if len(msg.Attachments) > 0{
+		for _, x := range msg.Attachments {
+			email.AddAttachment(x)
+		}
+	}
+
+	err = email.Send(smtpClient)
+	if err != nil {
+		log.Println("\n Mail Service. Error sending email: ", err)
+		return err
+	}
+	return nil
 }
 
 func (m *Mail) buildPlainMessage(msg Message) (string, error) {
@@ -97,4 +137,17 @@ func (m *Mail) inlineCss(s string) (string, error) {
 		return "", err
 	}
 	return html, nil
+}
+
+func (m *Mail) getEncryption (s string) mail.Encryption {
+	switch s {
+	case "tls":
+		return mail.EncryptionSTARTTLS
+	case "ssl":
+		return mail.EncryptionSSLTLS
+	case "none","":
+		return mail.EncryptionNone
+	default:
+		return mail.EncryptionSTARTTLS
+	}
 }
