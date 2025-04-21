@@ -29,7 +29,7 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//check DB connection by fetching all users
+/*	//check DB connection by fetching all users
 	allUsers, err := app.Models.User.GetAll()
 	fmt.Printf("All users in table: %+v\n", allUsers)
 	if err != nil {
@@ -37,7 +37,7 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		app.errorJson(w, errors.New("error fetching all users"), http.StatusBadRequest)
 		return
 	}
-
+*/
 	//validate user from DB
 	user, err := app.Models.User.GetByEmail(requestPayload.Email)
 	fmt.Printf("Check User in DB: %+v\n", user)
@@ -58,13 +58,12 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// log authentication
-	/*
 	err = app.logRequest("authentication", fmt.Sprintf("%s logged in", user.Email))
 	if err != nil {
 		app.errorJson(w, err, http.StatusBadRequest)
 		return
 	}
-*/
+
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("User Authenticated: %s", user.Email),
