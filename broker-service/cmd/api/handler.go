@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/rpc"
 )
 
 // since the handler "HandleSubmission" will accept all requests coming into broker service,
@@ -37,6 +38,11 @@ type LogPayload struct {
 	Data string `json:"data"`
 }
 
+type RPCPayload struct {
+	Name string
+	Data string
+}
+
 func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
 	payload := jsonResponse{
 		Error:   false,
@@ -59,7 +65,8 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	case "log":
 		// app.logItem(w, requestPayload.Log)
 		log.Println("\n Broker Service, request payload for Log event:", requestPayload.Log)
-		app.logEventViaRabbit(w, requestPayload.Log)
+		// app.logEventViaRabbit(w, requestPayload.Log)
+		app.logItemViaRPC(w, requestPayload.Log)
 	case "mail":
 		app.SendMail(w, requestPayload.Mail)
 	default:
@@ -208,4 +215,28 @@ func (app *Config) pushToQueue(name, msg string) error {
 		return err
 	}
 	return nil
+}
+
+func (app *Config) logItemViaRPC(w http.ResponseWriter, l LogPayload) {
+	client, err := rpc.Dial("tcp", "logger-service:5001")
+	if err != nil {
+		app.errorJson(w, err)
+		return
+	}
+
+	RPCPayload := RPCPayload {
+		Name: l.Name,
+		Data: l.Data,
+	}
+	var result string
+	err = client.Call("RPCServer.LogInfo", RPCPayload, &result)
+	if err != nil {
+		app.errorJson(w, err)
+		return
+	}
+	payload := jsonResponse {
+		Error: false,
+		Message: result,
+	}
+	app.writeJson(w, http.StatusAccepted, payload)
 }

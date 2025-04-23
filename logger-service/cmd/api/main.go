@@ -66,7 +66,7 @@ func main() {
 
 func (app *Config) rpcListen() error {
 	log.Println("\n Starting RPC server on port: ", rpcPort)
-	listen, err := net.Listen("tcp", fmt.Sprintf("0:0:0:0:%s", rpcPort))
+	listen, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", rpcPort))
 	if err != nil {
 		log.Println("\n Error while starting RPC server: ", err)
 		return err
@@ -87,7 +87,7 @@ func connectToMongo() (*mongo.Client, error) {
 	clientOptions := options.Client().ApplyURI(mongoURL)
 	clientOptions.SetAuth(options.Credential{
 		Username: "admin",
-		Password: "password",
+		Password: "super369",
 	})
 	// connect
 	c, err := mongo.Connect(context.TODO(), clientOptions)
