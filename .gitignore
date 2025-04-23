@@ -27,3 +27,6 @@ go.work.sum
 # microservices executable file
 authentication-service/authApp
 broker-service/brokerApp
+listener-service/listenerApp
+mail-service/mailerApp
+logger-service/loggerServiceApp
