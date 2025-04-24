@@ -51,6 +51,8 @@ func main() {
 	err = rpc.Register(new(RPCServer))
 	go app.rpcListen()
 
+	go app.gRPCListen()
+
 	//start web server
 	log.Printf("Starting logger service on Port: %s\n", webPort)
 	// go app.serve() Listen&Serve should be in main() because we need it to keep running
