@@ -18,6 +18,7 @@ const webPort = "80"
 
 type Config struct {
 	Repo data.Repository
+	Client *http.Client
 }
 
 var counts int64
@@ -31,7 +32,7 @@ func main() {
 	}
 
 	app := Config{
-
+		Client: &http.Client{},
 	}
 	defer conn.Close()
 /*

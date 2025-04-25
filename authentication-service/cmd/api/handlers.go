@@ -87,8 +87,8 @@ func (app *Config) logRequest(name, data string) error {
 		log.Println(("error calling log-service from auth-service"), err)
 		return err
 	}
-	client := &http.Client{}
-	_, err = client.Do(request);
+
+	_, err = app.Client.Do(request);
 	if err != nil {
 		return err
 	}
