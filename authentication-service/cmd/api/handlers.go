@@ -39,14 +39,14 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 */
 	//validate user from DB
-	user, err := app.Models.User.GetByEmail(requestPayload.Email)
+	user, err := app.Repo.GetByEmail(requestPayload.Email)
 	fmt.Printf("Check User in DB: %+v\n", user)
 	if err != nil {
 		log.Println("\nError finding user in DB:", err)
 		app.errorJson(w, errors.New("error finding user"), http.StatusBadRequest)
 		return
 	}
-	valid, err := user.PasswordMatches(requestPayload.Password)
+	valid, err := app.Repo.PasswordMatches(requestPayload.Password, *user)
 	log.Println("Check if password matches:", valid)
 
 	if err != nil{
